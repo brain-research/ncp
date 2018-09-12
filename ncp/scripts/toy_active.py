@@ -17,6 +17,8 @@ import itertools
 import os
 import warnings
 
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import ruamel.yaml as yaml
 import tensorflow as tf

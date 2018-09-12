@@ -123,8 +123,14 @@ def evaluate_model(
       std = np.sqrt(noise ** 2 + uncertainty ** 2 + 1e-8)
     else:
       std = noise
-    likelihood = scipy.stats.norm(mean, std).logpdf(target)
-    likelihood -= np.log(target_scale)
+    # Subtracting the log target scale is equivalent to evaluting the
+    # log-probability of the unnormalized targets under the scaled predicted
+    # mean and standard deviation.
+    # likelihood = scipy.stats.norm(
+    #     target_scale * mean, target_scale * std).logpdf(
+    #         target_scale * target)
+    likelihood = scipy.stats.norm(mean, std).logpdf(
+        target) - np.log(target_scale)
     likelihoods.append(likelihood)
   likelihood = np.concatenate(likelihoods, 0).sum(1).mean(0)
   distance = np.sqrt(np.concatenate(squared_distances, 0).sum(1).mean(0))
