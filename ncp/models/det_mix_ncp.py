@@ -36,14 +36,16 @@ def define_graph(config):
   num_visible = tf.placeholder(tf.int32, [])
   batch_size = tf.to_float(tf.shape(inputs)[0])
   data_mean, data_noise, data_uncertainty = network_tpl(inputs)
-  back_inputs = inputs + tf.random_normal(
+  ood_inputs = inputs + tf.random_normal(
       tf.shape(inputs), 0.0, config.noise_std)
-  back_mean, back_noise, back_uncertainty = network_tpl(back_inputs)
+  ood_mean, ood_noise, ood_uncertainty = network_tpl(ood_inputs)
   losses = [
       -tfd.Normal(data_mean, data_noise).log_prob(targets),
       -tfd.Bernoulli(data_uncertainty).log_prob(0),
-      -tfd.Bernoulli(back_uncertainty).log_prob(1),
+      -tfd.Bernoulli(ood_uncertainty).log_prob(1),
   ]
+  if config.center_at_target:
+    losses.append(-tfd.Normal(ood_mean, ood_noise).log_prob(targets))
   loss = sum(tf.reduce_sum(loss) for loss in losses) / batch_size
   optimizer = tf.train.AdamOptimizer(config.learning_rate)
   gradients, variables = zip(*optimizer.compute_gradients(
@@ -52,6 +54,7 @@ def define_graph(config):
     gradients, _ = tf.clip_by_global_norm(gradients, config.clip_gradient)
   optimize = optimizer.apply_gradients(zip(gradients, variables))
   data_uncertainty = tf.sigmoid(data_uncertainty)
-  data_mean = (1 - data_uncertainty) * data_mean + data_uncertainty * 0
+  if not config.center_at_target:
+    data_mean = (1 - data_uncertainty) * data_mean + data_uncertainty * 0
   data_noise = (1 - data_uncertainty) * data_noise + data_uncertainty * 0.1
   return tools.AttrDict(locals())

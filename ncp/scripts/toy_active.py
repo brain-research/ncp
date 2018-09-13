@@ -57,8 +57,10 @@ def default_config(model):
     config.ncp_scale = 1.0
     config.divergence_scale = 1e-5
     config.ood_std_prior = 0.1
+    config.center_at_target = False
   if model == 'det_mix_ncp':
     config.noise_std = 0.5
+    config.center_at_target = False
   config.learning_rate = 3e-4
   config.weight_std = 0.1
   config.clip_gradient = 100.0
@@ -75,6 +77,9 @@ def plot_results(args):
       ('Det', load_results('det')),
   ]
   fig, ax = plt.subplots(ncols=4, figsize=(8, 2))
+  for a in ax:
+    a.xaxis.set_major_locator(plt.MaxNLocator(5))
+    a.yaxis.set_major_locator(plt.MaxNLocator(5))
   tools.plot_distance(ax[0], results, 'train_distances', {})
   ax[0].set_xlabel('Data points seen')
   ax[0].set_title('Train RMSE')
@@ -86,7 +91,7 @@ def plot_results(args):
   tools.plot_distance(ax[2], results, 'test_distances', {})
   ax[2].set_xlabel('Data points seen')
   ax[2].set_title('Test RMSE')
-  ax[2].set_ylim(0.4, 0.55)
+  ax[2].set_ylim(0.35, 0.55)
   tools.plot_likelihood(ax[3], results, 'test_likelihoods', {})
   ax[3].set_xlabel('Data points seen')
   ax[3].set_title('Test NLPD')
@@ -98,6 +103,9 @@ def plot_results(args):
 
 
 def main(args):
+  if args.replot:
+    plot_results(args)
+    return
   warnings.filterwarnings('ignore', category=DeprecationWarning)  # TensorFlow.
   dataset = datasets.generate_vargrad_dataset()
   models_ = [
@@ -124,8 +132,7 @@ def main(args):
     print(message.format('#' * 79, model, seed))
     tf.reset_default_graph()
     tf.set_random_seed(seed)
-    with tf.device('/gpu:0'):
-      graph = define_graph(config)
+    graph = define_graph(config)
     tools.run_experiment(logdir, graph, dataset, **schedule, seed=seed)
     plot_results(args)
 
@@ -137,6 +144,7 @@ if __name__ == '__main__':
   parser.add_argument('--logdir', required=True)
   parser.add_argument('--seeds', type=int, default=5)
   parser.add_argument('--resume', action='store_true', default=False)
+  parser.add_argument('--replot', action='store_true', default=False)
   args = parser.parse_args()
   args.logdir = os.path.expanduser(args.logdir)
   main(args)

@@ -63,28 +63,29 @@ def define_graph(config):
   num_visible = tf.placeholder(tf.int32, [])
   batch_size = tf.shape(inputs)[0]
   data_dist, mean_dist = network_tpl(inputs)
-  background = inputs + tf.random_normal(
+  ood_inputs = inputs + tf.random_normal(
       tf.shape(inputs), 0.0, config.noise_std)
-  bg_data_dist, bg_mean_dist = network_tpl(background)
+  ood_data_dist, ood_mean_dist = network_tpl(ood_inputs)
   assert len(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
   divergence = sum([
       tf.reduce_sum(tensor) for tensor in
       tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)])
   num_batches = tf.to_float(num_visible) / tf.to_float(batch_size)
+  if config.center_at_target:
+    ood_mean_prior = tfd.Normal(targets, 1.0)
+  else:
+    ood_mean_prior = tfd.Normal(0.0, 1.0)
   losses = [
       config.divergence_scale * divergence / num_batches,
       -data_dist.log_prob(targets),
-      config.ncp_scale * tfd.kl_divergence(bg_mean_dist, tfd.Normal(0.0, 1.0)),
+      config.ncp_scale * tfd.kl_divergence(ood_mean_dist, ood_mean_prior),
   ]
-  stop_grad = tf.stop_gradient
-  if config.get('ood_std_prior', False):
-    losses.append(config.ncp_scale * tfd.kl_divergence(
-        tfd.Normal(
-            tf.stop_gradient(bg_mean_dist.mean()),
-            bg_data_dist.stddev()),
-        tfd.Normal(
-            tf.stop_gradient(bg_mean_dist.mean()),
-            config.ood_std_prior)))
+  if config.ood_std_prior:
+    sg = tf.stop_gradient
+    ood_std_dist = tfd.Normal(sg(ood_mean_dist.mean()), ood_data_dist.stddev())
+    ood_std_prior = tfd.Normal(sg(ood_mean_dist.mean()), config.ood_std_prior)
+    divergence = tfd.kl_divergence(ood_std_dist, ood_std_prior)
+    losses.append(config.ncp_scale * divergence)
   loss = sum(tf.reduce_sum(loss) for loss in losses) / tf.to_float(batch_size)
   optimizer = tf.train.AdamOptimizer(config.learning_rate)
   gradients, variables = zip(*optimizer.compute_gradients(
