@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from tensorflow_probability import distributions as tfd
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 from ncp import tools
-
-tfd = tf.contrib.distributions
 
 
 def network(inputs, config):

@@ -49,18 +49,18 @@ def default_schedule(model):
 def default_config(model):
   config = tools.AttrDict()
   config.num_inputs = 1
-  config.layer_sizes = [50, 50]
+  config.layer_sizes = [200, 200]  # [50, 50]
   if model == 'bbb':
     config.divergence_scale = 0.1
   if model == 'bbb_ncp':
     config.noise_std = 0.5
-    config.ncp_scale = 1.0
-    config.divergence_scale = 1e-5
+    config.ncp_scale = 0.1
+    config.divergence_scale = 0
     config.ood_std_prior = 0.1
-    config.center_at_target = False
+    config.center_at_target = True
   if model == 'det_mix_ncp':
     config.noise_std = 0.5
-    config.center_at_target = False
+    config.center_at_target = True
   config.learning_rate = 3e-4
   config.weight_std = 0.1
   config.clip_gradient = 100.0

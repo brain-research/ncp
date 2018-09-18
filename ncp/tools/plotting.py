@@ -146,7 +146,8 @@ def plot_likelihood(ax, results, key, baselines):
     ax.fill_between(
         domain, values.mean(0) - values.std(0), values.mean(0) + values.std(0),
         color=palette[index], alpha=0.2)
-    ax.set_xlim(domain[0], domain[-1])
+    # ax.set_xlim(domain[0], domain[-1])
+    ax.set_xlim(domain[0], domain[-20])
   x_scale = ax.get_xlim()[1] - ax.get_xlim()[0]
   y_scale = ax.get_ylim()[1] - ax.get_ylim()[0]
   for name, value in baselines.items():
@@ -173,7 +174,8 @@ def plot_distance(ax, results, key, baselines):
     ax.fill_between(
         domain, values.mean(0) - values.std(0), values.mean(0) + values.std(0),
         color=palette[index], alpha=0.2)
-    ax.set_xlim(domain[0], domain[-1])
+    # ax.set_xlim(domain[0], domain[-1])
+    ax.set_xlim(domain[0], domain[-20])
   x_scale = ax.get_xlim()[1] - ax.get_xlim()[0]
   y_scale = ax.get_ylim()[1] - ax.get_ylim()[0]
   for name, value in baselines.items():

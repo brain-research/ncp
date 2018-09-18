@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from tensorflow_probability import distributions as tfd
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 from ncp import tools
-
-tfd = tf.contrib.distributions
 
 
 def network(inputs, config):
@@ -78,13 +77,13 @@ def define_graph(config):
   losses = [
       config.divergence_scale * divergence / num_batches,
       -data_dist.log_prob(targets),
-      config.ncp_scale * tfd.kl_divergence(ood_mean_dist, ood_mean_prior),
+      config.ncp_scale * tfd.kl_divergence(ood_mean_prior, ood_mean_dist),
   ]
   if config.ood_std_prior:
     sg = tf.stop_gradient
     ood_std_dist = tfd.Normal(sg(ood_mean_dist.mean()), ood_data_dist.stddev())
     ood_std_prior = tfd.Normal(sg(ood_mean_dist.mean()), config.ood_std_prior)
-    divergence = tfd.kl_divergence(ood_std_dist, ood_std_prior)
+    divergence = tfd.kl_divergence(ood_std_prior, ood_std_dist)
     losses.append(config.ncp_scale * divergence)
   loss = sum(tf.reduce_sum(loss) for loss in losses) / tf.to_float(batch_size)
   optimizer = tf.train.AdamOptimizer(config.learning_rate)
