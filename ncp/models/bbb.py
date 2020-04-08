@@ -14,8 +14,9 @@
 
 from tensorflow_probability import distributions as tfd
 import numpy as np
-import tensorflow as tf
 import tensorflow_probability as tfp
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 from ncp import tools
 
