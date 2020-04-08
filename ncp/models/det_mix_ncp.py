@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from tensorflow_probability import distributions as tfd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 from ncp import tools
 

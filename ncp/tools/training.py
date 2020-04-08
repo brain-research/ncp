@@ -18,7 +18,8 @@ import sys
 
 import numpy as np
 import scipy.stats
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 from ncp.tools import attrdict
 from ncp.tools import plotting
